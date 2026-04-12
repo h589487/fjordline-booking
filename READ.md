@@ -1,41 +1,39 @@
 # Fjord Line – Booking Case
 
-Dette er min løsning på casen for Fjord Line. Jeg har fokusert på å bygge en robust kjerne som håndterer den største utfordringen i oppgaven: **kapasitetsstyring over flere delstrekninger (multi-leg).**
+Dette er mitt forslag til løsning på casen for Fjord Line. Jeg valgte ganske tidlig å fokusere på det som virket mest krevende i oppgaven, nemlig håndtering av kapasitet på tvers av flere delstrekninger (multi-leg). Resten av løsningene bygger i stor grad rundt dette.
 
-## Prioriteringer og valg
-I tråd med oppgaveteksten har jeg gjort noen bevisste valg underveis:
+## Tanker rundt valgene som er gjort
 
-### Kjernelogikk først
-Jeg har prioritert arbeidet i `BookingService` for å sikre at logikken for delstrekninger (*legs*) er helt presis. Dette er det kritiske punktet for å unngå overbooking på skipet.
+Jeg startet med kjernelogikken i `BookingService`. Poenget var å få kontroll på hvordan kapasitet faktisk reserveres per delstrekning, siden det er her det fort kan gå galt (for eksempel overbooking). Når den biten først satt, ble resten av systemet enklere å bygge rundt.
 
-### Enkelhet i lagring
-Jeg valgte en *in-memory*-løsning med `ConcurrentHashMap`. Dette holder oppgaven fokusert på selve forretningslogikken fremfor databaseoppsett, men arkitekturen er klargjort slik at en database kan kobles på senere via repository-laget.
+For lagring gikk jeg for en enkel *in-memory*-tilnærming med `ConcurrentHashMap`. Det holder fokus på logikken i casen i stedet for databaseoppsett. Samtidig er strukturen lagt opp slik at det ikke er noe problem å bytte til en database senere via et repository-lag.
 
-### Driftsklarhet
-Jeg har lagt vekt på strukturert JSON-logging og containerisering. Dette viser hvordan koden er tenkt å fungere i et moderne produksjonsmiljø hvor overvåking og skalering er viktig.
+Jeg har også tatt med litt rundt drift og hvordan dette kunne kjørt i praksis. Derfor er loggingen strukturert som JSON, og løsningen kan kjøres i container. Tanken er å vise hvordan dette kunne fungert i et miljø hvor man faktisk overvåker og skalerer tjenesten.
 
-### Kjøretøy som utvidelse
-Jeg valgte å implementere logikk for kjøretøy for å vise hvordan modellen enkelt kan håndtere ulik type last med forskjellig plassbehov (en bil teller som 5 enheter).
+Når det gjelder kjøretøy, la jeg det inn mest for å vise at modellen tåler ulike typer last. En bil teller for eksempel som flere enheter, og det håndteres på samme måte som passasjerer i kapasitetsberegningen.
 
----
+## Hva løsningen faktisk gjør
 
-## Funksjonalitet
-* **Smart rutehåndtering:** Systemet forstår at en reise fra Bergen til Hirtshals består av to etapper. Kapasitet reserveres på begge.
-* **Plassutnyttelse:** Passasjerer som går av underveis frigjør plass umiddelbart for nye reisende.
-* **Kansellering:** Ved sletting av en booking frigjøres kapasiteten nøyaktig på de delstrekningene som ble reservert.
-* **Manifest:** Henter ut en samlet passasjerliste for en spesifikk avgang.
+Systemet håndterer ruter som består av flere etapper. For eksempel vil en reise fra Bergen til Hirtshals automatisk reservere kapasitet på begge delstrekningene.
+
+Hvis noen går av underveis, blir plassen tilgjengelig igjen med en gang, slik at den kan brukes av andre passasjerer senere på ruten. Tilsvarende vil en kansellering frigjøre kapasitet akkurat der den ble brukt.
+
+Det er også mulig å hente ut et manifest for en avgang, altså en samlet oversikt over passasjerer.
 
 ## Teknisk oppsett
-Løsningen kjører på **Spring Boot 3.2.5** og **Java 17**. Jeg har brukt **Lombok** for å holde modellene rene for boilerplate-kode. For å sikre trådsikkerhet uten en database-lås, brukes `synchronized` på kritiske metoder.
 
-Loggene leveres i **JSON-format** via Logstash-encoderen, noe som gjør dem klare for verktøy som ELK-stack eller Splunk. Du finner også Docker-oppsett og Kubernetes-manifester i `k8s/` mappen.
+Løsningen er laget med Spring Boot 3.2.5 og Java 17. Jeg har brukt Lombok for å slippe mye boilerplate i modellene.
 
----
+For å unngå trøbbel med samtidighet uten database, er kritiske metoder synkronisert. Det er en enkel løsning, men fungerer fint i denne sammenhengen.
 
-## Hvordan teste løsningen
-Den raskeste måten å verifisere API-et på er å bruke fila `test.http` som ligger i rotmappen. Den inneholder ferdige kall for booking og manifest.
+Loggingen er på JSON-format (via Logstash encoder), så den kan enkelt plugges inn i verktøy som ELK eller Splunk. Det ligger også Docker-oppsett og Kubernetes-manifester i `k8s/`-mappen.
 
-### Bygging og kjøring
+## Hvordan teste
+
+Den enkleste måten å teste på er å bruke `test.http`-fila i rotmappen. Den inneholder ferdige kall du kan kjøre direkte mot API-et.
+
+## Bygg og kjør
+
 ```bash
 mvn clean package
 java -jar target/fjordline-booking-0.0.1-SNAPSHOT.jar
