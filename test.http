@@ -1,0 +1,21 @@
+### 1. Se alle tilgjengelige avganger
+GET http://localhost:8080/departures
+
+### 2. Opprett en booking (Bergen til Hirtshals)
+# Her bruker vi en JSON-body slik controlleren din forventer
+POST http://localhost:8080/departures/FL101/bookings
+Content-Type: application/json
+
+{
+  "from": "Bergen",
+  "to": "Hirtshals",
+  "passengerNames": ["Ola Nordmann", "Kari Nordmann"],
+  "hasVehicle": true
+}
+
+### 3. Hent manifest (passasjerliste) for avgang FL101
+GET http://localhost:8080/departures/FL101/manifest
+
+### 4. Kanseller en booking
+# Merk: Du må bytte ut BOOKING_ID med den faktiske ID-en du fikk i steg 2
+DELETE http://localhost:8080/departures/FL101/bookings/REPLACE_WITH_ID

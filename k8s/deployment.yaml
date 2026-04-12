@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fjordline-booking-deployment
+  labels:
+    app: fjordline-booking
+spec:
+  replicas: 2 # Vi kjører 2 instanser for høy tilgjengelighet
+  selector:
+    matchLabels:
+      app: fjordline-booking
+  template:
+    metadata:
+      labels:
+        app: fjordline-booking
+    spec:
+      containers:
+        - name: fjordline-booking
+          image: ditt-brukernavn/fjordline-booking:latest # Navnet på bildet i Docker Hub
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
