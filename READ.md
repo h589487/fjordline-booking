@@ -1,37 +1,42 @@
 # Fjord Line – Booking Case
 
-Dette er mitt forslag til løsning på casen for Fjord Line. Jeg valgte ganske tidlig å fokusere på det som virket mest krevende i oppgaven, nemlig håndtering av kapasitet på tvers av flere delstrekninger (multi-leg). Resten av løsningene bygger i stor grad rundt dette.
+Dette er mitt forslag til løsning på casen for Fjord Line. Jeg valgte ganske tidlig å fokusere på det som virket mest krevende i oppgaven, nemlig håndtering av kapasitet på tvers av flere delstrekninger (multi-leg). Resten av løsningen er i stor grad bygget rundt det.
 
 ## Tanker rundt valgene som er gjort
-Jeg startet prosjektet med å sette opp en lagdelt arkitektur (Controller, Service, Repository og Model). Ved å definere ansvarsområdene tidlig, sikret jeg at koden forble ryddig og testbar gjennom hele utviklingsløpet. Dette gjorde det enklere å isolere den mest krevende delen av oppgaven: kapasitetsstyring over flere delstrekninger.
 
-Etter at fundamentet var på plass, fokuserte jeg på kjernelogikken i `BookingService`. Poenget var å få kontroll på hvordan kapasitet faktisk reserveres per delstrekning, siden det er her det fort kan gå galt (for eksempel overbooking). Når den biten først satt, ble resten av systemet enklere å bygge rundt.
+Jeg startet med å sette opp en ganske standard lagdelt struktur med Controller, Service, Repository og Model. Det gjorde det lettere å holde ting ryddig underveis, og spesielt å isolere logikken rundt booking.
 
-For lagring gikk jeg for en enkel in-memory-tilnærming med `ConcurrentHashMap`. Det holder fokus på logikken i casen i stedet for databaseoppsett. Samtidig er strukturen lagt opp slik at det ikke er noe problem å bytte til en database senere via et repository-lag.
+Etter det gikk mesteparten av tiden til `BookingService`. Målet der var egentlig bare å få kontroll på hvordan kapasitet reserveres per delstrekning. Det er fort gjort å bomme her og ende opp med overbooking hvis man ikke håndterer alle legs riktig.
 
-Jeg har også tatt med litt rundt drift og hvordan dette kunne kjørt i praksis. Derfor er loggingen strukturert som JSON, og løsningen kan kjøres i container. Tanken er å vise hvordan dette kunne fungert i et miljø hvor man faktisk overvåker og skalerer tjenesten.
+For lagring gikk jeg for en enkel in-memory løsning med `ConcurrentHashMap`. Det føltes mer relevant i denne casen enn å bruke tid på database. Samtidig er det lagt opp slik at det ikke burde være noe problem å koble på et repository mot database senere.
 
-Når det gjelder kjøretøy, la jeg det inn mest for å vise at modellen tåler ulike typer last. En bil teller for eksempel som flere enheter, og det håndteres på samme måte som passasjerer i kapasitetsberegningen.
+Jeg tok også med litt rundt drift. Loggingen er i JSON-format, og løsningen kan kjøres i container. Det er ikke veldig avansert, men tanken var å vise hvordan dette kunne fungert i et mer realistisk oppsett.
 
 ## Hva løsningen faktisk gjør
 
-Systemet håndterer ruter som består av flere etapper. For eksempel vil en reise fra Bergen til Hirtshals automatisk reservere kapasitet på begge delstrekningene.
+Systemet håndterer ruter med flere etapper. Hvis noen booker fra Bergen til Hirtshals, blir kapasitet reservert på alle delstrekningene som inngår i reisen.
 
-Hvis noen går av underveis, blir plassen tilgjengelig igjen med en gang, slik at den kan brukes av andre passasjerer senere på ruten. Tilsvarende vil en kansellering frigjøre kapasitet akkurat der den ble brukt.
+Hvis passasjerer går av underveis, blir plassen tilgjengelig igjen med en gang. Det samme gjelder hvis en booking blir kansellert.
 
-Det er også mulig å hente ut et manifest for en avgang, altså en samlet oversikt over passasjerer.
+Jeg har også lagt inn enkel støtte for kjøretøy. En bil teller for eksempel som flere enheter, slik at det påvirker kapasiteten på en litt mer realistisk måte.
 
-## Teknisk oppsett
+Det er også mulig å hente ut et manifest per avgang, altså en liste over hvem som er med.
 
-Løsningen er laget med Spring Boot 3.2.5 og Java 17. Jeg har brukt Lombok for å slippe mye boilerplate i modellene.
+## Teknisk oppsett og arkitektur
 
-For å unngå trøbbel med samtidighet uten database, er kritiske metoder synkronisert. Det er en enkel løsning, men fungerer fint i denne sammenhengen.
+Løsningen er laget med Spring Boot 3.2.5 og Java 17.
 
-Loggingen er på JSON-format (via Logstash encoder), så den kan enkelt plugges inn i verktøy som ELK eller Splunk. Det ligger også Docker-oppsett og Kubernetes-manifester i `k8s/`-mappen.
+Strukturen følger vanlig oppdeling med controller, service, repository og model. Jeg bruker en egen `BookingRequest` som DTO for input, slik at API-kontrakten er skilt fra domenemodellen.
+
+Lombok er brukt for å slippe en del boilerplate.
+
+Siden alt går i minne, har jeg synkronisert noen av metodene i servicen for å unngå problemer med samtidige bookinger.
+
+Loggingen er satt opp i JSON-format via Logstash encoder, så det kan enkelt kobles mot verktøy som ELK eller Splunk.
 
 ## Hvordan teste
 
-Den enkleste måten å teste på er å bruke `test.http`-fila i rotmappen. Den inneholder ferdige kall du kan kjøre direkte mot API-et.
+Den enkleste måten å teste på er å bruke `test.http`-fila i rotmappen. Den inneholder ferdige kall som kan kjøres direkte fra IntelliJ eller VS Code.
 
 ## Bygg og kjør
 

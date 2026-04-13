@@ -1,5 +1,6 @@
 package com.example.fjordlinebooking.controller;
 
+import com.example.fjordlinebooking.dto.BookingRequest;
 import com.example.fjordlinebooking.model.Booking;
 import com.example.fjordlinebooking.model.Departure;
 import com.example.fjordlinebooking.model.Passenger;

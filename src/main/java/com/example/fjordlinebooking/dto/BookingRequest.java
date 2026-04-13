@@ -1,4 +1,4 @@
-package com.example.fjordlinebooking.controller;
+package com.example.fjordlinebooking.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
