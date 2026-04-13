@@ -3,10 +3,11 @@
 Dette er mitt forslag til løsning på casen for Fjord Line. Jeg valgte ganske tidlig å fokusere på det som virket mest krevende i oppgaven, nemlig håndtering av kapasitet på tvers av flere delstrekninger (multi-leg). Resten av løsningene bygger i stor grad rundt dette.
 
 ## Tanker rundt valgene som er gjort
+Jeg startet prosjektet med å sette opp en lagdelt arkitektur (Controller, Service, Repository og Model). Ved å definere ansvarsområdene tidlig, sikret jeg at koden forble ryddig og testbar gjennom hele utviklingsløpet. Dette gjorde det enklere å isolere den mest krevende delen av oppgaven: kapasitetsstyring over flere delstrekninger.
 
-Jeg startet med kjernelogikken i `BookingService`. Poenget var å få kontroll på hvordan kapasitet faktisk reserveres per delstrekning, siden det er her det fort kan gå galt (for eksempel overbooking). Når den biten først satt, ble resten av systemet enklere å bygge rundt.
+Etter at fundamentet var på plass, fokuserte jeg på kjernelogikken i `BookingService`. Poenget var å få kontroll på hvordan kapasitet faktisk reserveres per delstrekning, siden det er her det fort kan gå galt (for eksempel overbooking). Når den biten først satt, ble resten av systemet enklere å bygge rundt.
 
-For lagring gikk jeg for en enkel *in-memory*-tilnærming med `ConcurrentHashMap`. Det holder fokus på logikken i casen i stedet for databaseoppsett. Samtidig er strukturen lagt opp slik at det ikke er noe problem å bytte til en database senere via et repository-lag.
+For lagring gikk jeg for en enkel in-memory-tilnærming med `ConcurrentHashMap`. Det holder fokus på logikken i casen i stedet for databaseoppsett. Samtidig er strukturen lagt opp slik at det ikke er noe problem å bytte til en database senere via et repository-lag.
 
 Jeg har også tatt med litt rundt drift og hvordan dette kunne kjørt i praksis. Derfor er loggingen strukturert som JSON, og løsningen kan kjøres i container. Tanken er å vise hvordan dette kunne fungert i et miljø hvor man faktisk overvåker og skalerer tjenesten.
 
